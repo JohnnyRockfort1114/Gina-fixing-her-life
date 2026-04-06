@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gina 重启">
+<meta name="theme-color" content="#ffffff">
+<title>Gina 重启人生计划</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f7f7f5;
+  --bg3: #efefed;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.2);
+  --text: #0a0a0a;
+  --text2: #555;
+  --text3: #999;
+  --green: #2d6a4f;
+  --green-bg: #eaf4ee;
+  --red: #9b2335;
+  --red-bg: #fceef0;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: -webkit-fill-available;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.header {
+  padding: 52px 24px 14px;
+  border-bottom: 0.5px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.app-title { font-family: var(--serif); font-size: 19px; color: var(--text); letter-spacing: -0.01em; line-height: 1.3; }
+.app-sub { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--text3); margin-top: 3px; }
+.date-chip { font-size: 11px; color: var(--text3); font-family: var(--mono); text-align: right; line-height: 1.5; }
+.settings-btn { position: absolute; right: 20px; bottom: 14px; background: none; border: none; cursor: pointer; font-size: 16px; color: var(--text3); padding: 4px; }
+
+.tab-bar { display: flex; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+.tab { flex: 1; padding: 11px 4px; font-size: 11px; font-family: var(--mono); letter-spacing: 0.07em; text-align: center; border: none; background: transparent; color: var(--text3); cursor: pointer; position: relative; transition: color 0.15s; }
+.tab.active { color: var(--text); }
+.tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 1.5px; background: var(--text); }
+
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px 24px 60px; }
+.section { display: none; }
+.section.active { display: block; }
+
+.sec-label { font-size: 10px; letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; }
+
+.manifesto { font-family: var(--serif); font-size: 15px; line-height: 1.9; color: var(--text); padding: 18px 0; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); margin-bottom: 28px; }
+.manifesto em { font-style: italic; color: var(--text3); }
+
+.mit-block { margin-bottom: 28px; }
+.mit-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.mit-item:last-child { border-bottom: none; }
+.mit-circle { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; cursor: pointer; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.mit-circle.done { background: var(--text); border-color: var(--text); }
+.mit-circle.done::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: white; }
+.mit-text { font-size: 14px; color: var(--text); flex: 1; line-height: 1.5; }
+.mit-text.done { color: var(--text3); text-decoration: line-through; }
+.mit-source { font-size: 10px; color: var(--text3); margin-top: 2px; }
+.mit-delete { font-size: 20px; color: var(--text3); cursor: pointer; padding: 0 2px; line-height: 1; }
+.mit-add { display: flex; gap: 8px; margin-top: 10px; }
+.mit-add input { flex: 1; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: var(--mono); color: var(--text); outline: none; -webkit-appearance: none; }
+.mit-add input:focus { border-color: var(--border2); background: var(--bg); }
+.mit-add input::placeholder { color: var(--text3); }
+.add-btn { padding: 9px 16px; border: 0.5px solid var(--border2); border-radius: 8px; background: transparent; color: var(--text); font-size: 16px; font-family: var(--mono); cursor: pointer; }
+.add-btn:active { background: var(--bg2); }
+
+.streak-block { margin-bottom: 8px; }
+.streak-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.dot { flex: 1; aspect-ratio: 1; border-radius: 4px; background: var(--bg3); border: 0.5px solid var(--border); }
+.dot.done { background: var(--text); border-color: var(--text); }
+.dot.today { border: 1.5px solid var(--text2); }
+.dot-labels { display: flex; gap: 6px; }
+.dot-labels span { flex: 1; text-align: center; font-size: 10px; color: var(--text3); }
+
+.divider { height: 0.5px; background: var(--border); margin: 24px 0; }
+
+.q-block { margin-bottom: 20px; }
+.q-label { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+.q-sub { font-size: 11px; color: var(--text3); margin-bottom: 10px; line-height: 1.5; }
+
+textarea { width: 100%; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: var(--mono); color: var(--text); resize: none; outline: none; transition: border-color 0.15s; -webkit-appearance: none; line-height: 1.6; }
+textarea:focus { border-color: var(--border2); background: var(--bg); }
+textarea::placeholder { color: var(--text3); }
+
+.yn-row { display: flex; gap: 8px; }
+.yn-btn { flex: 1; padding: 10px; border: 0.5px solid var(--border); border-radius: 8px; background: transparent; color: var(--text3); font-size: 13px; font-family: var(--mono); cursor: pointer; transition: all 0.15s; }
+.yn-btn.yes-on { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+.yn-btn.no-on { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+.btn { width: 100%; padding: 11px; border: 0.5px solid var(--border2); border-radius: 8px; background: transparent; color: var(--text); font-size: 13px; font-family: var(--mono); cursor: pointer; margin-top: 8px; transition: background 0.12s, transform 0.1s; letter-spacing: 0.04em; }
+.btn:active { transform: scale(0.98); background: var(--bg2); }
+.btn.primary { background: var(--text); color: white; border-color: var(--text); }
+.btn.primary:active { background: #333; }
+
+.saved-msg { text-align: center; font-size: 12px; color: var(--green); margin-top: 8px; min-height: 18px; }
+
+.exam-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.exam-tag { display: flex; align-items: center; gap: 4px; padding: 5px 14px; border: 0.5px solid var(--border2); border-radius: 20px; font-size: 12px; color: var(--text2); background: var(--bg); cursor: pointer; transition: all 0.15s; }
+.exam-tag.selected { background: var(--text); color: white; border-color: var(--text); }
+.exam-add-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.exam-add-row input { flex: 1; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; font-family: var(--mono); color: var(--text); outline: none; -webkit-appearance: none; }
+.exam-add-row input::placeholder { color: var(--text3); }
+
+.exam-record { background: var(--bg2); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+.exam-record-name { font-size: 11px; color: var(--text3); margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+.exam-record textarea { background: var(--bg); }
+
+.stat-row { display: flex; gap: 8px; margin-bottom: 24px; }
+.stat-card { flex: 1; background: var(--bg2); border-radius: 10px; padding: 14px 10px; text-align: center; }
+.stat-num { font-family: var(--serif); font-size: 26px; color: var(--text); display: block; letter-spacing: -0.02em; }
+.stat-lbl { font-size: 10px; color: var(--text3); letter-spacing: 0.04em; margin-top: 2px; display: block; }
+
+.week-day-chip { font-size: 11px; padding: 5px 10px; border-radius: 20px; border: 0.5px solid var(--border); color: var(--text2); display: flex; gap: 6px; align-items: center; }
+
+.review-q { margin-bottom: 18px; }
+.review-label { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 8px; }
+
+.friction-block { padding-top: 24px; border-top: 0.5px solid var(--border); margin-top: 8px; }
+.friction-hint { font-size: 12px; color: var(--text3); margin-bottom: 10px; line-height: 1.6; }
+.timer-wrap { margin-top: 12px; display: none; }
+.timer-wrap.visible { display: block; }
+.timer-track { height: 2px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.timer-fill { height: 100%; background: var(--text2); border-radius: 2px; width: 100%; transition: width 1s linear; }
+.timer-count { font-size: 12px; color: var(--text3); text-align: right; }
+
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 100; align-items: flex-end; justify-content: center; }
+.modal-overlay.visible { display: flex; }
+.modal { background: var(--bg); border-radius: 16px 16px 0 0; padding: 24px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-title { font-family: var(--serif); font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 22px; color: var(--text3); cursor: pointer; }
+.setting-label { font-size: 10px; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; }
+.exam-manage-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.exam-manage-row:last-child { border-bottom: none; }
+.exam-manage-name { font-size: 14px; color: var(--text); }
+.exam-manage-del { background: none; border: none; font-size: 20px; color: var(--text3); cursor: pointer; padding: 0 4px; }
+.add-exam-row { display: flex; gap: 8px; margin-top: 14px; }
+.add-exam-row input { flex: 1; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: var(--mono); color: var(--text); outline: none; -webkit-appearance: none; }
+.add-exam-row input::placeholder { color: var(--text3); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="app-title">Gina 重启人生计划</div>
+        <div class="app-sub">一手平平无奇的牌，打出精彩绝伦</div>
+      </div>
+      <div class="date-chip" id="date-chip"></div>
+    </div>
+    <button class="settings-btn" onclick="openSettings()">⚙︎</button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('morning',this)">早晨</button>
+    <button class="tab" onclick="switchTab('evening',this)">晚间</button>
+    <button class="tab" onclick="switchTab('review',this)">复盘</button>
+  </div>
+
+  <div class="content">
+
+    <!-- 早晨 -->
+    <div id="morning" class="section active">
+      <div class="manifesto">
+        我是一个一手平平无奇的牌打得精彩绝伦的人，不同语言是我走向世界的门票，我的学习能力超强，大部分的知识门槛我都能通过学习来跨越，我自律，知道什么<em>想要</em>什么<em>不想要</em>，分得清即时渴望和真实需求。我不会把钱和时间浪费在不值得的人和事物之上。我想做的事一定能做成。
+      </div>
+
+      <div class="mit-block">
+        <div class="sec-label">今日 MIT</div>
+        <div class="mit-list" id="mit-list"></div>
+        <div class="mit-add">
+          <input type="text" id="mit-input" placeholder="添加今日任务..." maxlength="60" />
+          <button class="add-btn" onclick="addMIT()">+</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="streak-block">
+        <div class="sec-label">本周打卡</div>
+        <div class="streak-row" id="streak-dots"></div>
+        <div class="dot-labels" id="streak-labels"></div>
+      </div>
+    </div>
+
+    <!-- 晚间 -->
+    <div id="evening" class="section">
+      <div class="sec-label">每日复盘</div>
+
+      <div class="q-block">
+        <div class="q-label">今天最接近"把烂牌打出精彩"的我，是在什么时候？</div>
+        <textarea id="alive" rows="2" placeholder="哪一刻感觉最鲜活..."></textarea>
+      </div>
+      <div class="q-block">
+        <div class="q-label">今天我在用恐惧驱动自己，还是用热爱？</div>
+        <textarea id="q2" rows="2" placeholder="发生了什么..."></textarea>
+      </div>
+      <div class="q-block">
+        <div class="q-label">今天有没有把钱和时间花在不值得的人和事上？</div>
+        <textarea id="q3" rows="2" placeholder="今天的消费和时间..."></textarea>
+      </div>
+      <div class="q-block">
+        <div class="q-label">今天的行为，是那个"打出精彩"的我会做的事吗？</div>
+        <textarea id="q1" rows="2" placeholder="诚实回答..."></textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="q-block">
+        <div class="sec-label">运动记录</div>
+        <div class="q-label" style="margin-bottom:10px">今天去健身房了吗？</div>
+        <div class="yn-row" style="margin-bottom:16px">
+          <button class="yn-btn" id="gym-yes" onclick="selectYN('gym','yes')">去了</button>
+          <button class="yn-btn" id="gym-no" onclick="selectYN('gym','no')">没去</button>
+        </div>
+        <div class="q-label" style="margin-bottom:10px">今天有其他运动（散步、拉伸等）吗？</div>
+        <div class="yn-row">
+          <button class="yn-btn" id="move-yes" onclick="selectYN('move','yes')">有</button>
+          <button class="yn-btn" id="move-no" onclick="selectYN('move','no')">没有</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="q-block">
+        <div class="sec-label">备考记录</div>
+        <div class="q-sub">点选今天备考的科目，记录做了什么。</div>
+        <div class="exam-tags" id="exam-tags-evening"></div>
+        <div id="exam-records-evening"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="q-block">
+        <div class="sec-label">明日 MIT</div>
+        <div class="q-sub">明天最重要的任务是什么？明早会自动带入。</div>
+        <div class="mit-list" id="tomorrow-list"></div>
+        <div class="mit-add">
+          <input type="text" id="tomorrow-input" placeholder="明天的任务..." maxlength="60" />
+          <button class="add-btn" onclick="addTomorrow()">+</button>
+        </div>
+      </div>
+
+      <button class="btn primary" onclick="saveEvening()">保存今日记录</button>
+      <div class="saved-msg" id="evening-msg"></div>
+
+      <div class="friction-block">
+        <div class="sec-label">摩擦机制</div>
+        <div class="friction-hint">想联系不该联系的人？先写下来，等10分钟再决定。</div>
+        <textarea id="friction" rows="2" placeholder="此刻我需要的是___，我可以用___来替代它。"></textarea>
+        <button class="btn" onclick="startFriction()">开始等待 10 分钟</button>
+        <div class="timer-wrap" id="timer-wrap">
+          <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+          <div class="timer-count" id="timer-count">10:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 复盘 -->
+    <div id="review" class="section">
+      <div class="stat-row">
+        <div class="stat-card">
+          <span class="stat-num" id="s-streak">0</span>
+          <span class="stat-lbl">连续记录</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="s-gym">0</span>
+          <span class="stat-lbl">本周健身房</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="s-total">0</span>
+          <span class="stat-lbl">记录总天</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px">
+        <div class="sec-label">本周运动概览</div>
+        <div id="week-overview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3)">● 去健身房　○ 没去　▲ 有运动　△ 没运动</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div style="margin-bottom:24px">
+        <div class="sec-label">备考概览（本周）</div>
+        <div id="exam-review-list"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="sec-label">每周复盘</div>
+      <div class="review-q">
+        <div class="review-label">这周最接近"把烂牌打出精彩"的时刻是什么？</div>
+        <textarea id="rq1" rows="3" placeholder="写下这周让你骄傲的一刻..."></textarea>
+      </div>
+      <div class="review-q">
+        <div class="review-label">这周"虚假和谐感"在什么时候出现了？怎么应对的？</div>
+        <textarea id="rq2" rows="3" placeholder="诚实面对这周的逃避时刻..."></textarea>
+      </div>
+      <button class="btn primary" onclick="saveReview()">保存复盘</button>
+      <div class="saved-msg" id="review-msg"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-overlay" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">设置</div>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+    <div class="setting-label">备考科目管理</div>
+    <div id="exam-manage-list"></div>
+    <div class="add-exam-row">
+      <input type="text" id="new-exam-input" placeholder="添加新科目（如：雅思）" maxlength="20" />
+      <button class="add-btn" onclick="addExam()">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TODAY = new Date().toISOString().split('T')[0];
+const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; })();
+const DAY_CN = ['日','一','二','三','四','五','六'];
+const DAY_FULL = ['周日','周一','周二','周三','周四','周五','周六'];
+
+function getStore() { try { return JSON.parse(localStorage.getItem('gina_v2') || '{}'); } catch(e) { return {}; } }
+function setStore(d) { try { localStorage.setItem('gina_v2', JSON.stringify(d)); } catch(e) {} }
+
+let store = getStore();
+if (!store.days) store.days = {};
+if (!store.days[TODAY]) store.days[TODAY] = {};
+if (!store.exams) store.exams = ['日语 N1', '托福'];
+if (!store.weeks) store.weeks = {};
+function save() { setStore(store); }
+
+// Date chip
+(function() {
+  const d = new Date();
+  document.getElementById('date-chip').innerHTML = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日<br>${DAY_FULL[d.getDay()]}`;
+})();
+
+// Tab switch
+function switchTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'review') renderReview();
+  if (id === 'evening') renderEveningExams();
+}
+
+function flash(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg || '已保存';
+  setTimeout(() => el.textContent = '', 2200);
+}
+
+// ---- MIT ----
+let mitItems = store.days[TODAY].mit ? JSON.parse(JSON.stringify(store.days[TODAY].mit)) : [];
+
+// Pull from yesterday's tomorrow list if today is empty
+if (mitItems.length === 0 && store.days[yesterday] && store.days[yesterday].tomorrowMit && store.days[yesterday].tomorrowMit.length > 0) {
+  mitItems = store.days[yesterday].tomorrowMit.map(t => ({ text: t.text, done: false, source: '来自昨晚' }));
+  store.days[TODAY].mit = mitItems;
+  save();
+}
+
+function renderMITList() {
+  const list = document.getElementById('mit-list');
+  list.innerHTML = '';
+  if (mitItems.length === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:10px 0;">今天还没有任务，添加一个吧。</div>';
+    return;
+  }
+  mitItems.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'mit-item';
+    row.innerHTML = `
+      <div class="mit-circle${item.done?' done':''}" onclick="toggleMIT(${i})"></div>
+      <div style="flex:1">
+        <div class="mit-text${item.done?' done':''}">${item.text}</div>
+        ${item.source ? `<div class="mit-source">${item.source}</div>` : ''}
+      </div>
+      <div class="mit-delete" onclick="deleteMIT(${i})">×</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addMIT() {
+  const input = document.getElementById('mit-input');
+  const val = input.value.trim();
+  if (!val) return;
+  mitItems.push({ text: val, done: false });
+  store.days[TODAY].mit = mitItems;
+  save(); input.value = '';
+  renderMITList();
+}
+
+function toggleMIT(i) {
+  mitItems[i].done = !mitItems[i].done;
+  store.days[TODAY].mit = mitItems;
+  save(); renderMITList();
+}
+
+function deleteMIT(i) {
+  mitItems.splice(i, 1);
+  store.days[TODAY].mit = mitItems;
+  save(); renderMITList();
+}
+
+document.getElementById('mit-input').addEventListener('keydown', e => { if (e.key==='Enter') addMIT(); });
+renderMITList();
+
+// ---- Tomorrow MIT ----
+let tomorrowItems = store.days[TODAY].tomorrowMit ? JSON.parse(JSON.stringify(store.days[TODAY].tomorrowMit)) : [];
+
+function renderTomorrowList() {
+  const list = document.getElementById('tomorrow-list');
+  list.innerHTML = '';
+  tomorrowItems.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'mit-item';
+    row.innerHTML = `
+      <div class="mit-circle" style="opacity:0.3;cursor:default;"></div>
+      <div class="mit-text" style="flex:1;">${item.text}</div>
+      <div class="mit-delete" onclick="deleteTomorrow(${i})">×</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addTomorrow() {
+  const input = document.getElementById('tomorrow-input');
+  const val = input.value.trim();
+  if (!val) return;
+  tomorrowItems.push({ text: val, done: false });
+  store.days[TODAY].tomorrowMit = tomorrowItems;
+  save(); input.value = '';
+  renderTomorrowList();
+}
+
+function deleteTomorrow(i) {
+  tomorrowItems.splice(i, 1);
+  store.days[TODAY].tomorrowMit = tomorrowItems;
+  save(); renderTomorrowList();
+}
+
+document.getElementById('tomorrow-input').addEventListener('keydown', e => { if (e.key==='Enter') addTomorrow(); });
+renderTomorrowList();
+
+// ---- Streak ----
+function renderStreak() {
+  const dots = document.getElementById('streak-dots');
+  const labels = document.getElementById('streak-labels');
+  dots.innerHTML = ''; labels.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().split('T')[0];
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    if (store.days[key] && store.days[key].saved) dot.classList.add('done');
+    if (key === TODAY) dot.classList.add('today');
+    dots.appendChild(dot);
+    const lbl = document.createElement('span');
+    lbl.textContent = DAY_CN[d.getDay()];
+    labels.appendChild(lbl);
+  }
+}
+renderStreak();
+
+// ---- YN ----
+const ynState = { gym: store.days[TODAY].gym||null, move: store.days[TODAY].move||null };
+function selectYN(key, val) {
+  ynState[key] = val;
+  document.getElementById(key+'-yes').className = 'yn-btn'+(val==='yes'?' yes-on':'');
+  document.getElementById(key+'-no').className = 'yn-btn'+(val==='no'?' no-on':'');
+}
+if (ynState.gym) selectYN('gym', ynState.gym);
+if (ynState.move) selectYN('move', ynState.move);
+
+// Restore text
+const td = store.days[TODAY];
+['q1','q2','q3','alive'].forEach(id => { if (td[id]) { const el = document.getElementById(id); if(el) el.value = td[id]; } });
+
+// ---- Exam tags ----
+let selectedExams = store.days[TODAY].selectedExams ? [...store.days[TODAY].selectedExams] : [];
+
+function renderEveningExams() {
+  const tagsEl = document.getElementById('exam-tags-evening');
+  const recordsEl = document.getElementById('exam-records-evening');
+  tagsEl.innerHTML = ''; recordsEl.innerHTML = '';
+
+  store.exams.forEach(exam => {
+    const tag = document.createElement('div');
+    tag.className = 'exam-tag' + (selectedExams.includes(exam) ? ' selected' : '');
+    tag.textContent = exam;
+    tag.onclick = () => toggleExam(exam);
+    tagsEl.appendChild(tag);
+  });
+
+  selectedExams.forEach(exam => {
+    const block = document.createElement('div');
+    block.className = 'exam-record';
+    const savedNote = (store.days[TODAY].examNotes && store.days[TODAY].examNotes[exam]) || '';
+    const safeId = 'en_' + exam.replace(/[^a-zA-Z0-9]/g, '_');
+    block.innerHTML = `<div class="exam-record-name">${exam}</div><textarea rows="2" id="${safeId}" placeholder="今天做了哪些备考相关的事情...">${savedNote}</textarea>`;
+    recordsEl.appendChild(block);
+  });
+}
+
+function toggleExam(exam) {
+  if (selectedExams.includes(exam)) selectedExams = selectedExams.filter(e => e !== exam);
+  else selectedExams.push(exam);
+  store.days[TODAY].selectedExams = selectedExams;
+  save(); renderEveningExams();
+}
+
+renderEveningExams();
+
+// ---- Save evening ----
+function saveEvening() {
+  const day = store.days[TODAY];
+  day.q1 = document.getElementById('q1').value;
+  day.q2 = document.getElementById('q2').value;
+  day.q3 = document.getElementById('q3').value;
+  day.alive = document.getElementById('alive').value;
+  day.gym = ynState.gym;
+  day.move = ynState.move;
+  day.saved = true;
+  day.tomorrowMit = tomorrowItems;
+  if (!day.examNotes) day.examNotes = {};
+  selectedExams.forEach(exam => {
+    const safeId = 'en_' + exam.replace(/[^a-zA-Z0-9]/g, '_');
+    const el = document.getElementById(safeId);
+    if (el) day.examNotes[exam] = el.value;
+  });
+  save(); renderStreak();
+  flash('evening-msg', '今日已记录 ✓');
+}
+
+// ---- Friction ----
+let timerInterval = null;
+function startFriction() {
+  if (timerInterval) return;
+  const wrap = document.getElementById('timer-wrap');
+  const fill = document.getElementById('timer-fill');
+  const count = document.getElementById('timer-count');
+  wrap.classList.add('visible');
+  let secs = 600;
+  fill.style.transition = 'none'; fill.style.width = '100%';
+  timerInterval = setInterval(() => {
+    secs--;
+    fill.style.transition = 'width 1s linear';
+    fill.style.width = (secs/600*100).toFixed(1)+'%';
+    const m = Math.floor(secs/60), s = secs%60;
+    count.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if (secs <= 0) {
+      clearInterval(timerInterval); timerInterval = null;
+      count.textContent = '10分钟到了。你还想发吗？';
+      fill.style.width = '0%';
+    }
+  }, 1000);
+}
+
+// ---- Review ----
+function renderReview() {
+  const allDays = Object.keys(store.days).filter(k => store.days[k].saved);
+  document.getElementById('s-total').textContent = allDays.length;
+
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const k = d.toISOString().split('T')[0];
+    if (store.days[k] && store.days[k].saved) { streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  document.getElementById('s-streak').textContent = streak;
+
+  let gymCount = 0;
+  for (let i = 0; i < 7; i++) {
+    const dd = new Date(); dd.setDate(dd.getDate()-i);
+    if (store.days[dd.toISOString().split('T')[0]] && store.days[dd.toISOString().split('T')[0]].gym === 'yes') gymCount++;
+  }
+  document.getElementById('s-gym').textContent = gymCount + '/7';
+
+  // Week overview
+  const weekEl = document.getElementById('week-overview');
+  weekEl.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const dd = new Date(); dd.setDate(dd.getDate()-i);
+    const k = dd.toISOString().split('T')[0];
+    const day = store.days[k] || {};
+    const chip = document.createElement('div');
+    chip.className = 'week-day-chip';
+    const g = day.gym === 'yes' ? '●' : day.gym === 'no' ? '○' : '·';
+    const m = day.move === 'yes' ? '▲' : day.move === 'no' ? '△' : '·';
+    chip.innerHTML = `<span style="color:var(--text3)">${DAY_CN[dd.getDay()]}</span><span>${g}</span><span style="font-size:10px">${m}</span>`;
+    weekEl.appendChild(chip);
+  }
+
+  // Exam review
+  const examEl = document.getElementById('exam-review-list');
+  examEl.innerHTML = '';
+  let hasAny = false;
+  store.exams.forEach(exam => {
+    const entries = [];
+    for (let i = 6; i >= 0; i--) {
+      const dd = new Date(); dd.setDate(dd.getDate()-i);
+      const k = dd.toISOString().split('T')[0];
+      const note = store.days[k] && store.days[k].examNotes && store.days[k].examNotes[exam];
+      if (note && note.trim()) entries.push({ day: DAY_CN[dd.getDay()], note });
+    }
+    if (!entries.length) return;
+    hasAny = true;
+    const block = document.createElement('div');
+    block.style.marginBottom = '18px';
+    block.innerHTML = `<div style="font-size:11px;letter-spacing:0.08em;color:var(--text3);margin-bottom:8px;text-transform:uppercase;">${exam}</div>` +
+      entries.map(e => `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px;"><span style="color:var(--text3);min-width:22px;">周${e.day}</span><span style="color:var(--text2);">${e.note}</span></div>`).join('');
+    examEl.appendChild(block);
+  });
+  if (!hasAny) examEl.innerHTML = '<div style="font-size:13px;color:var(--text3);">本周暂无备考记录</div>';
+
+  // Restore weekly review
+  const wk = store.weeks[TODAY] || {};
+  if (wk.q1) document.getElementById('rq1').value = wk.q1;
+  if (wk.q2) document.getElementById('rq2').value = wk.q2;
+}
+
+function saveReview() {
+  store.weeks[TODAY] = { q1: document.getElementById('rq1').value, q2: document.getElementById('rq2').value };
+  save(); flash('review-msg', '复盘已保存 ✓');
+}
+
+// ---- Settings ----
+function openSettings() { renderExamManage(); document.getElementById('settings-overlay').classList.add('visible'); }
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('visible'); renderEveningExams(); }
+function closeSettingsOutside(e) { if (e.target.id === 'settings-overlay') closeSettings(); }
+
+function renderExamManage() {
+  const list = document.getElementById('exam-manage-list');
+  list.innerHTML = '';
+  if (store.exams.length === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:10px 0;">暂无科目</div>';
+    return;
+  }
+  store.exams.forEach((exam, i) => {
+    const row = document.createElement('div');
+    row.className = 'exam-manage-row';
+    row.innerHTML = `<span class="exam-manage-name">${exam}</span><button class="exam-manage-del" onclick="deleteExam(${i})">×</button>`;
+    list.appendChild(row);
+  });
+}
+
+function addExam() {
+  const input = document.getElementById('new-exam-input');
+  const val = input.value.trim();
+  if (!val || store.exams.includes(val)) return;
+  store.exams.push(val);
+  save(); input.value = '';
+  renderExamManage();
+}
+
+function deleteExam(i) {
+  const name = store.exams[i];
+  store.exams.splice(i, 1);
+  selectedExams = selectedExams.filter(e => e !== name);
+  store.days[TODAY].selectedExams = selectedExams;
+  save(); renderExamManage();
+}
+
+document.getElementById('new-exam-input').addEventListener('keydown', e => { if (e.key==='Enter') addExam(); });
+</script>
+</body>
+</html>
