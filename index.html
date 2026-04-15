@@ -1,830 +1,872 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gina重启计划">
-
-<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GINA 重启人生计划</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="description" content="Gina 重启人生计划 - 反思性生产力系统">
-    
-    <!-- Tailwind CSS (CDN for development, but we'll use a style block for core styles) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
-        :root {
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: #ffffff;
-            color: #111827;
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
-
-        /* Custom Checkbox Styling */
-        input[type="checkbox"] {
-            appearance: none;
-            background-color: #fff;
-            margin: 0;
-            font: inherit;
-            color: currentColor;
-            width: 1.5em;
-            height: 1.5em;
-            border: 2px solid #2563eb;
-            border-radius: 0.375rem;
-            display: grid;
-            place-content: center;
-            cursor: pointer;
-        }
-
-        input[type="checkbox"]::before {
-            content: "";
-            width: 0.85em;
-            height: 0.85em;
-            transform: scale(0);
-            transition: 120ms transform ease-in-out;
-            box-shadow: inset 1em 1em #2563eb;
-            transform-origin: bottom left;
-            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
-        }
-
-        input[type="checkbox"]:checked::before {
-            transform: scale(1);
-        }
-
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
-
-        .selection-blue::selection {
-            background-color: #dbeafe;
-        }
-
-        /* Animations */
-        .fade-in {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .slide-up {
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-    </style>
-</head>
-<body class="selection-blue">
-    <div id="root"></div>
-
-    <!-- React Libraries -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX (In a real export, we'd transpile this, but for a single file demo, this is easiest) -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-
-        // --- Icons (SVG Components) ---
-        const Icons = {
-            LayoutGrid: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-                </svg>
-            ),
-            Calendar: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-            ),
-            Moon: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-            ),
-            BarChart3: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" />
-                </svg>
-            ),
-            Menu: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-            ),
-            UserCircle: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="10" r="3" /><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                </svg>
-            ),
-            Plus: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-            ),
-            Check: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <polyline points="20 6 9 17 4 12" />
-                </svg>
-            ),
-            X: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            ),
-            AlertCircle: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-            ),
-            Flame: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.21 1.146-3.027" />
-                </svg>
-            ),
-            BookOpen: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                </svg>
-            ),
-            Dumbbell: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M6.5 6.5h11" /><path d="M6.5 17.5h11" /><path d="M3 10v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" /><path d="M8 10V6.5a2.5 2.5 0 0 1 5 0V10" /><path d="M8 14v3.5a2.5 2.5 0 0 0 5 0V14" />
-                </svg>
-            ),
-            Languages: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" />
-                </svg>
-            ),
-            MoreHorizontal: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
-                </svg>
-            ),
-            Target: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" />
-                </svg>
-            ),
-            TrendingUp: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
-                </svg>
-            ),
-            History: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" />
-                </svg>
-            ),
-            ChevronDown: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
-            ),
-            ChevronUp: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <polyline points="18 15 12 9 6 15" />
-                </svg>
-            ),
-            CheckCircle2: ({ size = 24, className = "" }) => (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="m9 12 2 2 4-4" />
-                </svg>
-            )
-        };
-
-        // --- Utils ---
-        const cn = (...classes) => classes.filter(Boolean).join(' ');
-
-        const formatDate = (date, options = {}) => {
-            return new Intl.DateTimeFormat('zh-CN', options).format(date);
-        };
-
-        // --- Components ---
-
-        const BottomNav = ({ activeTab, setActiveTab }) => {
-            const tabs = [
-                { id: 'dashboard', label: 'DASHBOARD', icon: Icons.LayoutGrid },
-                { id: 'daily', label: 'DAILY', icon: Icons.Calendar },
-                { id: 'evening', label: 'EVENING', icon: Icons.Moon },
-                { id: 'review', label: 'REVIEW', icon: Icons.BarChart3 },
-            ];
-
-            return (
-                <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 px-4 pb-6 pt-2 flex justify-around items-center z-50">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex flex-col items-center justify-center pt-2 transition-all duration-200",
-                                activeTab === tab.id ? "text-blue-600 border-t-2 border-blue-600" : "text-gray-400"
-                            )}
-                        >
-                            <tab.icon size={24} />
-                            <span className="text-[10px] font-bold tracking-wider mt-1">{tab.label}</span>
-                        </button>
-                    ))}
-                </nav>
-            );
-        };
-
-        const Header = () => (
-            <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 flex justify-between items-center px-6 py-4">
-                <div className="flex items-center gap-4">
-                    <Icons.Menu className="text-gray-900 cursor-pointer" size={24} />
-                    <h1 className="font-black tracking-tighter text-gray-900 uppercase text-lg">GINA 重启人生计划</h1>
-                </div>
-                <Icons.UserCircle className="text-gray-900 cursor-pointer" size={28} />
-            </header>
-        );
-
-        const SOSOverlay = ({ isOpen, onClose }) => {
-            const [timeLeft, setTimeLeft] = useState(600);
-            const [need, setNeed] = useState('');
-            const [alternative, setAlternative] = useState('');
-
-            useEffect(() => {
-                if (!isOpen) return;
-                const timer = setInterval(() => {
-                    setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-                }, 1000);
-                return () => clearInterval(timer);
-            }, [isOpen]);
-
-            const formatTime = (seconds) => {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-
-            if (!isOpen) return null;
-
-            return (
-                <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 fade-in">
-                    <button onClick={onClose} className="absolute top-8 right-8 text-blue-600 hover:scale-110 transition-transform">
-                        <Icons.X size={40} />
-                    </button>
-                    
-                    <div className="w-full max-w-2xl text-center">
-                        <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-4">PROTOCOL TIME REMAINING</p>
-                        <div className="text-[8rem] md:text-[10rem] font-black tracking-tighter leading-none text-blue-600 tabular-nums">
-                            {formatTime(timeLeft)}
-                        </div>
-
-                        <div className="mt-16 space-y-12 text-left">
-                            <div className="flex items-baseline gap-4 border-b border-gray-200 pb-2">
-                                <span className="text-2xl font-bold tracking-tight whitespace-nowrap">此刻我需要的是</span>
-                                <input 
-                                    value={need}
-                                    onChange={(e) => setNeed(e.target.value)}
-                                    className="w-full border-none bg-transparent focus:ring-0 text-2xl font-bold tracking-tight py-1 px-0 placeholder:text-gray-300" 
-                                    placeholder="[ 点击输入 ]" 
-                                />
-                            </div>
-                            <div className="flex items-baseline gap-4 border-b border-gray-200 pb-2">
-                                <span className="text-2xl font-bold tracking-tight whitespace-nowrap">我可以用</span>
-                                <input 
-                                    value={alternative}
-                                    onChange={(e) => setAlternative(e.target.value)}
-                                    className="w-full border-none bg-transparent focus:ring-0 text-2xl font-bold tracking-tight py-1 px-0 placeholder:text-gray-300" 
-                                    placeholder="[ 点击输入 ]" 
-                                />
-                                <span className="text-2xl font-bold tracking-tight whitespace-nowrap">来替代它。</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-20 flex flex-col items-center">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-[1px] bg-blue-600"></div>
-                                <Icons.AlertCircle className="text-blue-600" size={24} />
-                                <div className="w-12 h-[1px] bg-blue-600"></div>
-                            </div>
-                            <p className="text-xl font-extrabold tracking-tight text-blue-600">先命名，先等待。10分钟后再做决定。</p>
-                            <p className="text-[10px] font-bold tracking-[0.1em] uppercase text-gray-500 mt-2">OBSERVE THE CRAVING WITHOUT ACTION.</p>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const WeeklyReview = ({ dailyLogs, onFinalize }) => {
-            const [isOpen, setIsOpen] = useState(false);
-            const [review, setReview] = useState({
-                id: Date.now().toString(),
-                weekEnding: new Date().toISOString(),
-                winningMoments: '',
-                falseHarmonyCheck: '',
-                nextWeekOneThing: '',
-                debtPaid: 0,
-                isFinalized: false,
-            });
-
-            const totalWorkouts = dailyLogs.filter(log => log.workoutCompleted).length;
-            const totalStudyHours = dailyLogs.reduce((acc, log) => acc + log.studyHours, 0);
-            const totalSpending = dailyLogs.reduce((acc, log) => 
-                acc + log.expenses.reduce((sum, exp) => sum + exp.amount, 0), 0
-            );
-            const hasImpulseSpending = dailyLogs.some(log => 
-                log.expenses.some(exp => exp.isImpulse)
-            );
-
-            const DEBT_GOAL = 1000;
-            const debtProgress = Math.min((review.debtPaid / DEBT_GOAL) * 100, 100);
-
-            const handleFinalize = () => {
-                onFinalize({ ...review, isFinalized: true });
-                setIsOpen(false);
-            };
-
-            return (
-                <section className="mt-8 border-t-2 border-black pt-8 mb-12">
-                    <button 
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="w-full flex items-center justify-between group"
-                    >
-                        <h3 className="text-2xl font-black tracking-tighter uppercase">Weekly Review</h3>
-                        {isOpen ? <Icons.ChevronUp size={24} /> : <Icons.ChevronDown size={24} />}
-                    </button>
-
-                    {isOpen && (
-                        <div className="py-8 space-y-12 fade-in">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="border-2 border-black p-6 flex flex-col justify-between aspect-square md:aspect-auto">
-                                    <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Body Sculpting</span>
-                                    <div className="mt-4">
-                                        <span className="text-4xl font-black">{totalWorkouts}</span>
-                                        <span className="text-xs font-bold ml-2">/ 7 DAYS</span>
-                                    </div>
-                                </div>
-                                <div className="border-2 border-black p-6 flex flex-col justify-between aspect-square md:aspect-auto">
-                                    <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Academic Deep Work</span>
-                                    <div className="mt-4">
-                                        <span className="text-4xl font-black">{totalStudyHours}</span>
-                                        <span className="text-xs font-bold ml-2">HOURS</span>
-                                    </div>
-                                </div>
-                                <div className="border-2 border-black p-6 flex flex-col justify-between aspect-square md:aspect-auto">
-                                    <span className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Financial Status</span>
-                                    <div className="mt-4 flex items-baseline justify-between">
-                                        <span className="text-4xl font-black">¥{totalSpending.toFixed(0)}</span>
-                                        <div className={cn(
-                                            "w-3 h-3 rounded-full",
-                                            hasImpulseSpending ? "bg-gray-300" : "bg-black"
-                                        )} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-12">
-                                <div className="space-y-4">
-                                    <label className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Winning Moments</label>
-                                    <p className="text-sm font-medium italic text-gray-400">"In which moment this week did I truly feel like I was playing a mediocre hand of cards brilliantly?"</p>
-                                    <textarea 
-                                        value={review.winningMoments}
-                                        onChange={(e) => setReview({...review, winningMoments: e.target.value})}
-                                        className="w-full border-none p-0 focus:ring-0 text-xl font-bold tracking-tight placeholder:text-gray-200 min-h-[100px] resize-none"
-                                        placeholder="Type your reflection..."
-                                    />
-                                </div>
-                                <div className="space-y-4">
-                                    <label className="text-[10px] font-bold tracking-widest uppercase text-gray-500">False Harmony Check</label>
-                                    <p className="text-sm font-medium italic text-gray-400">"When did I prioritize 'avoiding conflict' over my true goals this week? How will I handle it next time?"</p>
-                                    <textarea 
-                                        value={review.falseHarmonyCheck}
-                                        onChange={(e) => setReview({...review, falseHarmonyCheck: e.target.value})}
-                                        className="w-full border-none p-0 focus:ring-0 text-xl font-bold tracking-tight placeholder:text-gray-200 min-h-[100px] resize-none"
-                                        placeholder="Reflect on indecisiveness..."
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-8">
-                                <div className="border-2 border-black p-8">
-                                    <label className="text-[10px] font-bold tracking-widest uppercase text-gray-500 block mb-4">The "One Thing" for Next Week</label>
-                                    <input 
-                                        value={review.nextWeekOneThing}
-                                        onChange={(e) => setReview({...review, nextWeekOneThing: e.target.value})}
-                                        className="w-full border-none p-0 focus:ring-0 text-3xl font-black tracking-tighter placeholder:text-gray-200 uppercase"
-                                        placeholder="DEFINE THE MISSION"
-                                    />
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-end">
-                                        <label className="text-[10px] font-bold tracking-widest uppercase text-gray-500">Debt Zero Tracker</label>
-                                        <span className="text-xs font-black">¥{review.debtPaid} / ¥{DEBT_GOAL}</span>
-                                    </div>
-                                    <div className="h-4 border-2 border-black p-0.5">
-                                        <div 
-                                            className="h-full bg-black transition-all duration-1000" 
-                                            style={{ width: `${debtProgress}%` }}
-                                        />
-                                    </div>
-                                    <input 
-                                        type="range"
-                                        min="0"
-                                        max={DEBT_GOAL}
-                                        value={review.debtPaid}
-                                        onChange={(e) => setReview({...review, debtPaid: parseInt(e.target.value)})}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
-                                    />
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={handleFinalize}
-                                className="w-full bg-black text-white py-6 text-sm font-bold tracking-[0.3em] uppercase hover:bg-gray-900 transition-all flex items-center justify-center gap-2"
-                            >
-                                <Icons.CheckCircle2 size={18} />
-                                Finalize Week
-                            </button>
-                        </div>
-                    )}
-                </section>
-            );
-        };
-
-        const Dashboard = () => {
-            const [goals] = useState([
-                { id: '1', title: 'Tokyo University Exam', current: 640, total: 1200, unit: 'Hr', type: 'YEARLY' },
-                { id: '2', title: 'Japanese N1 Proficiency', current: 8400, total: 10000, unit: 'Qty', type: 'MONTHLY' },
-            ]);
-
-            const [habits] = useState([
-                { id: '1', name: 'Memorize 50 Words', streak: 7, completed: false, icon: 'Languages' },
-                { id: '2', name: '30min Exercise', streak: 12, completed: false, icon: 'Dumbbell' },
-                { id: '3', name: 'Read 10 Pages', streak: 30, completed: true, icon: 'BookOpen' },
-            ]);
-
-            return (
-                <div className="space-y-8 pb-12 fade-in">
-                    <section>
-                        <h2 className="text-3xl font-black tracking-tight text-gray-900">你好, Gina</h2>
-                        <p className="text-gray-500 font-medium">今天是开启新生的第 124 天</p>
-                        <div className="mt-4 inline-flex items-center gap-1 bg-gray-50 px-2 py-1 rounded text-[10px] uppercase tracking-widest text-gray-400">
-                            <Icons.History size={12} />
-                            Last updated: 08:42 AM
-                        </div>
-                    </section>
-
-                    <section>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold tracking-widest uppercase text-gray-500 flex items-center gap-2">
-                                <Icons.Target size={16} className="text-blue-600" />
-                                活跃目标
-                            </h3>
-                            <button className="text-xs font-bold text-blue-600 flex items-center gap-1">
-                                <Icons.Plus size={14} /> 新增目标
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {goals.map(goal => (
-                                <div key={goal.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <span className="text-[10px] font-bold text-blue-600 px-2 py-0.5 rounded bg-blue-50 mb-1 inline-block">{goal.type}</span>
-                                            <h4 className="font-bold text-gray-900">{goal.title}</h4>
-                                        </div>
-                                        <Icons.MoreHorizontal size={18} className="text-gray-400" />
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between text-xs font-medium">
-                                            <span className="text-gray-500">进度 ({goal.unit})</span>
-                                            <span className="text-gray-900">{goal.current} / {goal.total}</span>
-                                        </div>
-                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-blue-600 rounded-full transition-all duration-500" 
-                                                style={{ width: `${(goal.current / goal.total) * 100}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-
-                    <section>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xs font-bold tracking-widest uppercase text-gray-500 flex items-center gap-2">
-                                <Icons.TrendingUp size={16} className="text-blue-600" />
-                                每日习惯
-                            </h3>
-                        </div>
-                        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
-                            {habits.map(habit => (
-                                <div key={habit.id} className={cn("p-4 flex items-center justify-between border-b border-gray-50 last:border-none", habit.completed && "bg-gray-50 opacity-60")}>
-                                    <div className="flex items-center gap-3">
-                                        <button className={cn(
-                                            "w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all",
-                                            habit.completed ? "bg-blue-600 border-blue-600 text-white" : "border-blue-600 text-blue-600 hover:bg-blue-50"
-                                        )}>
-                                            {habit.completed ? <Icons.Check size={20} /> : <Icons.Check size={20} className="opacity-0 hover:opacity-100" />}
-                                        </button>
-                                        <div>
-                                            <h5 className={cn("text-sm font-bold text-gray-900", habit.completed && "line-through")}>{habit.name}</h5>
-                                            <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                                                <Icons.Flame size={12} className="text-orange-500" /> {habit.streak} day streak
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {habit.icon === 'Languages' && <Icons.Languages size={20} className="text-gray-300" />}
-                                    {habit.icon === 'Dumbbell' && <Icons.Dumbbell size={20} className="text-gray-300" />}
-                                    {habit.icon === 'BookOpen' && <Icons.BookOpen size={20} className="text-gray-300" />}
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-            );
-        };
-
-        const Daily = () => {
-            const [tasks, setTasks] = useState([
-                { id: '1', text: '确认团队同步会议议程', completed: false },
-                { id: '2', text: '整理客户反馈邮件 (Q2 季度)', completed: false },
-                { id: '3', text: '清空收件箱', completed: true },
-                { id: '4', text: '回复设计团队的 Figma 评论', completed: false },
-            ]);
-
-            const mit = {
-                id: 'mit',
-                text: '完成产品发布路线图的最终审核',
-                description: '来自昨日复盘: "这是本周最重要的交付物，必须在精力最充沛的上午处理完成。"',
-                completed: false,
-                isMIT: true
-            };
-
-            return (
-                <div className="space-y-12 pb-12 fade-in">
-                    <section>
-                        <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">CURRENT PHASE: MORNING EXECUTION</p>
-                        <div className="flex items-baseline gap-4">
-                            <h2 className="text-5xl font-black tracking-tighter">{formatDate(new Date(), { month: '2-digit', day: '2-digit' })}</h2>
-                            <span className="text-xl font-bold text-gray-400 uppercase tracking-widest">{formatDate(new Date(), { weekday: 'long' })}</span>
-                        </div>
-                    </section>
-
-                    <section>
-                        <div className="mb-4">
-                            <span className="bg-blue-600 text-white px-2 py-1 text-[10px] font-bold tracking-widest uppercase rounded-sm">TODAY'S MIT</span>
-                        </div>
-                        <div className="group relative flex items-start gap-6 p-8 border border-blue-600 bg-blue-50/20 rounded-lg">
-                            <div className="mt-2">
-                                <input 
-                                    type="checkbox" 
-                                    className="w-8 h-8 rounded-lg border-2 border-blue-600 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                                />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-3xl font-black tracking-tight leading-tight">{mit.text}</h3>
-                                <p className="mt-4 text-gray-500 text-sm leading-relaxed">{mit.description}</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section>
-                        <div className="flex justify-between items-end mb-8">
-                            <h4 className="font-black text-xl tracking-tighter uppercase">TO-DO LIST</h4>
-                            <span className="text-[10px] font-bold tracking-widest text-gray-400">03 / 08 TASKS</span>
-                        </div>
-                        <div className="space-y-6">
-                            {tasks.map(task => (
-                                <div key={task.id} className="flex items-center gap-4 group">
-                                    <input 
-                                        type="checkbox" 
-                                        checked={task.completed}
-                                        onChange={() => setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t))}
-                                    />
-                                    <span className={cn("text-lg font-medium", task.completed && "line-through text-gray-300")}>
-                                        {task.text}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-            );
-        };
-
-        const Evening = () => {
-            const [expenses] = useState([
-                { id: '1', description: 'Lunch Box', amount: 35.00, date: '2024-05-24' },
-                { id: '2', description: 'Subway Fare', amount: 4.00, date: '2024-05-24' },
-                { id: '3', description: 'Stationery Store', amount: 89.50, date: '2024-05-24' },
-            ]);
-
-            return (
-                <div className="space-y-12 pb-12 fade-in">
-                    <section>
-                        <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Phase 02 / Daily Log</p>
-                        <h2 className="text-5xl font-black tracking-tighter mb-4">EVENING REVIEW</h2>
-                        <div className="w-full h-1 bg-blue-600 rounded-full"></div>
-                    </section>
-
-                    <section>
-                        <h3 className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-8">Philosophical Alignment</h3>
-                        <div className="p-8 border border-gray-100 rounded-lg bg-white shadow-sm">
-                            <p className="text-sm font-bold mb-6">Wasting time/money?</p>
-                            <div className="flex gap-2 max-w-sm">
-                                <button className="flex-1 py-3 border border-gray-100 rounded bg-white text-gray-900 font-bold text-xs hover:bg-gray-50">YES</button>
-                                <button className="flex-1 py-3 rounded bg-blue-600 text-white font-bold text-xs">NO</button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="space-y-12">
-                        <h3 className="text-[10px] font-bold tracking-widest uppercase text-gray-400">Performance Data</h3>
-                        
-                        <div className="flex flex-col md:flex-row gap-8 items-start">
-                            <div className="w-32 flex-shrink-0">
-                                <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">01 / Body</span>
-                            </div>
-                            <div className="flex-1 w-full">
-                                <div className="flex items-center gap-6 mb-4">
-                                    <p className="font-bold">Workout completed?</p>
-                                    <div className="flex border border-gray-100 rounded overflow-hidden">
-                                        <button className="px-6 py-2 bg-blue-600 text-white text-xs font-bold">YES</button>
-                                        <button className="px-6 py-2 bg-white text-gray-900 text-xs font-bold hover:bg-gray-50">NO</button>
-                                    </div>
-                                </div>
-                                <div className="w-full h-px bg-gray-100"></div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row gap-8 items-start">
-                            <div className="w-32 flex-shrink-0">
-                                <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">02 / Academic</span>
-                            </div>
-                            <div className="flex-1 w-full">
-                                <div className="flex flex-wrap gap-4 mb-6">
-                                    <button className="px-6 py-2 rounded bg-blue-600 text-white text-xs font-bold">N1</button>
-                                    <button className="px-6 py-2 rounded border border-gray-100 bg-white text-gray-900 text-xs font-bold hover:bg-gray-50">TOEFL</button>
-                                    <button className="px-6 py-2 rounded border border-gray-100 bg-white text-gray-900 text-xs font-bold hover:bg-gray-50">OTHER</button>
-                                </div>
-                                <textarea className="w-full bg-transparent border-b border-gray-100 focus:border-blue-600 focus:ring-0 p-0 py-2 resize-none text-sm placeholder:text-gray-300" placeholder="Study notes and progress details..." rows={2}></textarea>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row gap-8 items-start">
-                            <div className="w-32 flex-shrink-0">
-                                <span className="text-[10px] font-bold tracking-widest text-gray-400 uppercase">03 / Finance</span>
-                            </div>
-                            <div className="flex-1 w-full space-y-8">
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                    <div className="space-y-8">
-                                        <div className="border-l-4 border-blue-600 pl-4">
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">Today's Total</p>
-                                            <p className="text-3xl font-black text-blue-600">¥128.50</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">Recent Expenses</p>
-                                            <ul className="text-xs space-y-3">
-                                                {expenses.map(exp => (
-                                                    <li key={exp.id} className="flex justify-between items-center border-b border-gray-50 pb-2">
-                                                        <span className="font-medium">{exp.description}</span>
-                                                        <span className="font-bold">¥{exp.amount.toFixed(2)}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section>
-                        <button className="w-full bg-blue-600 text-white py-6 rounded-lg text-sm font-bold tracking-[0.2em] uppercase hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                            Finish Review
-                        </button>
-                    </section>
-                </div>
-            );
-        };
-
-        // --- Main App ---
-
-        function App() {
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [isSOSOpen, setIsSOSOpen] = useState(false);
-            
-            const [dailyLogs, setDailyLogs] = useState(() => {
-                const saved = localStorage.getItem('gina_daily_logs');
-                return saved ? JSON.parse(saved) : [];
-            });
-
-            const [weeklyHistory, setWeeklyHistory] = useState(() => {
-                const saved = localStorage.getItem('gina_weekly_history');
-                return saved ? JSON.parse(saved) : [];
-            });
-
-            useEffect(() => {
-                localStorage.setItem('gina_daily_logs', JSON.stringify(dailyLogs));
-            }, [dailyLogs]);
-
-            useEffect(() => {
-                localStorage.setItem('gina_weekly_history', JSON.stringify(weeklyHistory));
-            }, [weeklyHistory]);
-
-            const handleFinalizeWeek = (review) => {
-                setWeeklyHistory(prev => [...prev, review]);
-                setDailyLogs([]);
-            };
-
-            return (
-                <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100">
-                    <Header />
-                    
-                    <main className="pt-24 px-6 md:px-12 max-w-4xl mx-auto pb-32">
-                        {activeTab === 'dashboard' && (
-                            <>
-                                <Dashboard />
-                                <WeeklyReview 
-                                    dailyLogs={dailyLogs} 
-                                    onFinalize={handleFinalizeWeek} 
-                                />
-                            </>
-                        )}
-                        {activeTab === 'daily' && <Daily />}
-                        {activeTab === 'evening' && <Evening />}
-                        {activeTab === 'review' && (
-                            <div className="space-y-8 fade-in">
-                                <h2 className="text-4xl font-black uppercase tracking-tighter">History</h2>
-                                {weeklyHistory.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                                        <Icons.BarChart3 size={64} className="text-gray-200 mb-4" />
-                                        <p className="text-gray-400 mt-2">No archived weeks yet.</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {weeklyHistory.map(rev => (
-                                            <div key={rev.id} className="border-2 border-black p-6">
-                                                <div className="flex justify-between items-center mb-4">
-                                                    <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
-                                                        Week Ending {formatDate(new Date(rev.weekEnding), { month: 'short', day: '2-digit', year: 'numeric' })}
-                                                    </span>
-                                                    <Icons.CheckCircle2 size={16} className="text-green-600" />
-                                                </div>
-                                                <h4 className="text-xl font-black uppercase tracking-tighter mb-2">{rev.nextWeekOneThing}</h4>
-                                                <p className="text-sm text-gray-500 line-clamp-2">{rev.winningMoments}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </main>
-
-                    <div className="fixed bottom-24 right-8 z-40">
-                        <button 
-                            onClick={() => setIsSOSOpen(true)}
-                            className="bg-white border-2 border-blue-600 p-4 rounded-lg flex items-center justify-center active:scale-95 transition-transform shadow-lg shadow-blue-50"
-                        >
-                            <Icons.AlertCircle className="text-blue-600" size={24} />
-                            <span className="ml-2 font-black text-xs tracking-tighter uppercase text-blue-600">SOS</span>
-                        </button>
-                    </div>
-
-                    <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-                    
-                    {isSOSOpen && <SOSOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />}
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+# LifeOS - 个人成长管理 APP
+
+这个想法非常棒！我来帮你搭建一个完整的原型。下面是一个功能完备的实现：
+
+```tsx
+import { useState, useEffect, useCallback } from "react";
+
+// Types
+interface Todo {
+  id: string;
+  text: string;
+  type: "daily" | "weekly" | "monthly";
+  completed: boolean;
+  date: string;
+  category: string;
+}
+
+interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  completedDates: string[];
+  createdAt: string;
+}
+
+interface Goal {
+  id: string;
+  name: string;
+  category: string;
+  icon: string;
+  target: number;
+  unit: string;
+  logs: { date: string; value: number; note: string }[];
+  createdAt: string;
+}
+
+interface Transaction {
+  id: string;
+  type: "income" | "expense";
+  amount: number;
+  category: string;
+  note: string;
+  date: string;
+}
+
+interface Review {
+  id: string;
+  date: string;
+  period: "daily" | "weekly" | "monthly";
+  mood: number;
+  reflection: string;
+  wins: string;
+  improvements: string;
+  nextPlan: string;
+}
+
+interface FocusSession {
+  id: string;
+  task: string;
+  duration: number;
+  completedAt: string;
+}
+
+const TODAY = new Date().toISOString().split("T")[0];
+const MONTH = new Date().toISOString().slice(0, 7);
+
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+const CATEGORY_COLORS: Record<string, string> = {
+  工作: "#6366f1",
+  学习: "#3b82f6",
+  运动: "#10b981",
+  健康: "#14b8a6",
+  生活: "#f59e0b",
+  社交: "#ec4899",
+  理财: "#8b5cf6",
+  其他: "#64748b",
+  餐饮: "#ef4444",
+  交通: "#f97316",
+  购物: "#e879f9",
+  娱乐: "#06b6d4",
+  工资: "#10b981",
+  副业: "#6366f1",
+  投资: "#8b5cf6",
+};
+
+export default function LifeOS() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [todos, setTodos] = useState<Todo[]>(() => {
+    const s = localStorage.getItem("lifeos_todos");
+    return s ? JSON.parse(s) : [];
+  });
+  const [habits, setHabits] = useState<Habit[]>(() => {
+    const s = localStorage.getItem("lifeos_habits");
+    return s ? JSON.parse(s) : [];
+  });
+  const [goals, setGoals] = useState<Goal[]>(() => {
+    const s = localStorage.getItem("lifeos_goals");
+    return s ? JSON.parse(s) : [];
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    const s = localStorage.getItem("lifeos_transactions");
+    return s ? JSON.parse(s) : [];
+  });
+  const [reviews, setReviews] = useState<Review[]>(() => {
+    const s = localStorage.getItem("lifeos_reviews");
+    return s ? JSON.parse(s) : [];
+  });
+  const [focusSessions, setFocusSessions] = useState<FocusSession[]>(() => {
+    const s = localStorage.getItem("lifeos_focus");
+    return s ? JSON.parse(s) : [];
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem("lifeos_todos", JSON.stringify(todos));
+  }, [todos]);
+  useEffect(() => {
+    localStorage.setItem("lifeos_habits", JSON.stringify(habits));
+  }, [habits]);
+  useEffect(() => {
+    localStorage.setItem("lifeos_goals", JSON.stringify(goals));
+  }, [goals]);
+  useEffect(() => {
+    localStorage.setItem("lifeos_transactions", JSON.stringify(transactions));
+  }, [transactions]);
+  useEffect(() => {
+    localStorage.setItem("lifeos_reviews", JSON.stringify(reviews));
+  }, [reviews]);
+  useEffect(() => {
+    localStorage.setItem("lifeos_focus", JSON.stringify(focusSessions));
+  }, [focusSessions]);
+
+  const navItems = [
+    { id: "dashboard", label: "仪表盘", icon: "◆" },
+    { id: "todo", label: "计划清单", icon: "☑" },
+    { id: "goals", label: "目标追踪", icon: "◎" },
+    { id: "finance", label: "财务记录", icon: "¥" },
+    { id: "review", label: "复盘反思", icon: "◈" },
+    { id: "focus", label: "专注模式", icon: "◉" },
+  ];
+
+  const todayTodos = todos.filter((t) => t.type === "daily" && t.date === TODAY);
+  const todayCompleted = todayTodos.filter((t) => t.completed).length;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        height: "100vh",
+        background: "#0f172a",
+        color: "#e2e8f0",
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        overflow: "hidden",
+      }}
+    >
+      {/* Sidebar */}
+      <div
+        style={{
+          width: sidebarOpen ? 220 : 60,
+          background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+          borderRight: "1px solid #1e293b",
+          display: "flex",
+          flexDirection: "column",
+          transition: "width 0.3s",
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            padding: "20px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            borderBottom: "1px solid #1e293b",
+          }}
+        >
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              border: "none",
+              color: "white",
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              cursor: "pointer",
+              fontSize: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            ⟐
+          </button>
+          {sidebarOpen && (
+            <span
+              style={{ fontWeight: 700, fontSize: 18, letterSpacing: "-0.5px" }}
+            >
+              LifeOS
+            </span>
+          )}
+        </div>
+        <nav style={{ padding: "12px 8px", flex: 1 }}>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                width: "100%",
+                padding: sidebarOpen ? "10px 12px" : "10px 0",
+                justifyContent: sidebarOpen ? "flex-start" : "center",
+                background:
+                  activeTab === item.id
+                    ? "rgba(99,102,241,0.15)"
+                    : "transparent",
+                border: "none",
+                color: activeTab === item.id ? "#818cf8" : "#94a3b8",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: activeTab === item.id ? 600 : 400,
+                marginBottom: 4,
+                transition: "all 0.2s",
+              }}
+            >
+              <span style={{ fontSize: 18, flexShrink: 0 }}>{item.icon}</span>
+              {sidebarOpen && <span>{item.label}</span>}
+            </button>
+          ))}
+        </nav>
+        {sidebarOpen && (
+          <div
+            style={{
+              padding: "16px",
+              borderTop: "1px solid #1e293b",
+              fontSize: 11,
+              color: "#475569",
+              textAlign: "center",
+            }}
+          >
+            Fix Your Life ✦ One Day at a Time
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div style={{ flex: 1, overflow: "auto", padding: "24px 32px" }}>
+        {activeTab === "dashboard" && (
+          <Dashboard
+            todos={todos}
+            habits={habits}
+            goals={goals}
+            transactions={transactions}
+            focusSessions={focusSessions}
+            todayTodos={todayTodos}
+            todayCompleted={todayCompleted}
+            setActiveTab={setActiveTab}
+          />
+        )}
+        {activeTab === "todo" && (
+          <TodoModule
+            todos={todos}
+            setTodos={setTodos}
+            habits={habits}
+            setHabits={setHabits}
+          />
+        )}
+        {activeTab === "goals" && (
+          <GoalsModule goals={goals} setGoals={setGoals} />
+        )}
+        {activeTab === "finance" && (
+          <FinanceModule
+            transactions={transactions}
+            setTransactions={setTransactions}
+          />
+        )}
+        {activeTab === "review" && (
+          <ReviewModule
+            reviews={reviews}
+            setReviews={setReviews}
+            todos={todos}
+            habits={habits}
+            goals={goals}
+            transactions={transactions}
+            focusSessions={focusSessions}
+          />
+        )}
+        {activeTab === "focus" && (
+          <FocusModule
+            focusSessions={focusSessions}
+            setFocusSessions={setFocusSessions}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ DASHBOARD ============
+function Dashboard({
+  todos,
+  habits,
+  goals,
+  transactions,
+  focusSessions,
+  todayTodos,
+  todayCompleted,
+  setActiveTab,
+}: any) {
+  const todayHabits = habits.filter((h: Habit) =>
+    h.completedDates.includes(TODAY)
+  );
+  const monthTransactions = transactions.filter((t: Transaction) =>
+    t.date.startsWith(MONTH)
+  );
+  const monthIncome = monthTransactions
+    .filter((t: Transaction) => t.type === "income")
+    .reduce((s: number, t: Transaction) => s + t.amount, 0);
+  const monthExpense = monthTransactions
+    .filter((t: Transaction) => t.type === "expense")
+    .reduce((s: number, t: Transaction) => s + t.amount, 0);
+  const todayFocus = focusSessions
+    .filter((f: FocusSession) => f.completedAt?.startsWith(TODAY))
+    .reduce((s: number, f: FocusSession) => s + f.duration, 0);
+
+  const cards = [
+    {
+      title: "今日计划",
+      value: `${todayCompleted}/${todayTodos.length}`,
+      sub: "已完成",
+      color: "#6366f1",
+      tab: "todo",
+    },
+    {
+      title: "习惯打卡",
+      value: `${todayHabits.length}/${habits.length}`,
+      sub: "今日已打卡",
+      color: "#10b981",
+      tab: "todo",
+    },
+    {
+      title: "目标进行中",
+      value: goals.length,
+      sub: "个目标",
+      color: "#3b82f6",
+      tab: "goals",
+    },
+    {
+      title: "本月收支",
+      value: `¥${(monthIncome - monthExpense).toLocaleString()}`,
+      sub: `收入¥${monthIncome.toLocaleString()} 支出¥${monthExpense.toLocaleString()}`,
+      color: monthIncome - monthExpense >= 0 ? "#10b981" : "#ef4444",
+      tab: "finance",
+    },
+    {
+      title: "今日专注",
+      value: `${Math.floor(todayFocus / 60)}`,
+      sub: "分钟",
+      color: "#f59e0b",
+      tab: "focus",
+    },
+  ];
+
+  const quote =
+    "\"The goal is not to be perfect. The goal is to be better than yesterday.\"";
+
+  return (
+    <div>
+      <div style={{ marginBottom: 28 }}>
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            margin: 0,
+            letterSpacing: "-0.5px",
+          }}
+        >
+          早上好 👋
+        </h1>
+        <p style={{ color: "#64748b", marginTop: 6, fontSize: 14 }}>
+          {new Date().toLocaleDateString("zh-CN", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            weekday: "long",
+          })}
+        </p>
+      </div>
+
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.08))",
+          border: "1px solid rgba(99,102,241,0.2)",
+          borderRadius: 12,
+          padding: "20px 24px",
+          marginBottom: 24,
+          fontStyle: "italic",
+          color: "#a5b4fc",
+          fontSize: 14,
+        }}
+      >
+        {quote}
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 16,
+          marginBottom: 32,
+        }}
+      >
+        {cards.map((card, i) => (
+          <div
+            key={i}
+            onClick={() => setActiveTab(card.tab)}
+            style={{
+              background: "#1e293b",
+              borderRadius: 12,
+              padding: "20px",
+              cursor: "pointer",
+              border: "1px solid #334155",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = card.color;
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "#334155";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>
+              {card.title}
+            </div>
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 700,
+                color: card.color,
+                marginBottom: 4,
+              }}
+            >
+              {card.value}
+            </div>
+            <div style={{ fontSize: 12, color: "#475569" }}>{card.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent Activity */}
+      <h3
+        style={{
+          fontSize: 16,
+          fontWeight: 600,
+          marginBottom: 12,
+          color: "#94a3b8",
+        }}
+      >
+        今日待办
+      </h3>
+      <div
+        style={{
+          background: "#1e293b",
+          borderRadius: 12,
+          border: "1px solid #334155",
+          overflow: "hidden",
+        }}
+      >
+        {todayTodos.length === 0 ? (
+          <div
+            style={{
+              padding: 32,
+              textAlign: "center",
+              color: "#475569",
+              fontSize: 14,
+            }}
+          >
+            还没有今日计划，去计划清单添加吧 ✦
+          </div>
+        ) : (
+          todayTodos.slice(0, 5).map((todo: Todo) => (
+            <div
+              key={todo.id}
+              style={{
+                padding: "12px 20px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                borderBottom: "1px solid #334155",
+              }}
+            >
+              <span
+                style={{
+                  color: todo.completed ? "#10b981" : "#475569",
+                  fontSize: 16,
+                }}
+              >
+                {todo.completed ? "✓" : "○"}
+              </span>
+              <span
+                style={{
+                  textDecoration: todo.completed ? "line-through" : "none",
+                  color: todo.completed ? "#475569" : "#e2e8f0",
+                  fontSize: 14,
+                }}
+              >
+                {todo.text}
+              </span>
+              <span
+                style={{
+                  marginLeft: "auto",
+                  fontSize: 11,
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  background:
+                    CATEGORY_COLORS[todo.category]
+                      ? CATEGORY_COLORS[todo.category] + "20"
+                      : "#33415520",
+                  color: CATEGORY_COLORS[todo.category] || "#64748b",
+                }}
+              >
+                {todo.category}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ TODO MODULE ============
+function TodoModule({ todos, setTodos, habits, setHabits }: any) {
+  const [tab, setTab] = useState<"daily" | "weekly" | "monthly" | "habits">(
+    "daily"
+  );
+  const [newText, setNewText] = useState("");
+  const [newCategory, setNewCategory] = useState("工作");
+  const [newHabit, setNewHabit] = useState("");
+  const [newHabitIcon, setNewHabitIcon] = useState("💪");
+
+  const categories = ["工作", "学习", "运动", "健康", "生活", "社交", "其他"];
+  const habitIcons = [
+    "💪",
+    "📚",
+    "🧘",
+    "💧",
+    "🏃",
+    "🎯",
+    "✍️",
+    "😴",
+    "🥗",
+    "🎵",
+  ];
+
+  const getDateForType = (type: string) => {
+    if (type === "daily") return TODAY;
+    if (type === "weekly") {
+      const d = new Date();
+      const day = d.getDay();
+      d.setDate(d.getDate() - day + 1);
+      return d.toISOString().split("T")[0];
+    }
+    return MONTH;
+  };
+
+  const currentDate = getDateForType(tab);
+  const filteredTodos =
+    tab !== "habits"
+      ? todos.filter(
+          (t: Todo) => t.type === tab && t.date === currentDate
+        )
+      : [];
+
+  const addTodo = () => {
+    if (!newText.trim()) return;
+    setTodos([
+      ...todos,
+      {
+        id: uid(),
+        text: newText.trim(),
+        type: tab,
+        completed: false,
+        date: currentDate,
+        category: newCategory,
+      },
+    ]);
+    setNewText("");
+  };
+
+  const toggleTodo = (id: string) => {
+    setTodos(
+      todos.map((t: Todo) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      )
+    );
+  };
+
+  const deleteTodo = (id: string) => {
+    setTodos(todos.filter((t: Todo) => t.id !== id));
+  };
+
+  const addHabit = () => {
+    if (!newHabit.trim()) return;
+    setHabits([
+      ...habits,
+      {
+        id: uid(),
+        name: newHabit.trim(),
+        icon: newHabitIcon,
+        completedDates: [],
+        createdAt: TODAY,
+      },
+    ]);
+    setNewHabit("");
+  };
+
+  const toggleHabit = (id: string) => {
+    setHabits(
+      habits.map((h: Habit) => {
+        if (h.id !== id) return h;
+        const dates = h.completedDates.includes(TODAY)
+          ? h.completedDates.filter((d) => d !== TODAY)
+          : [...h.completedDates, TODAY];
+        return { ...h, completedDates: dates };
+      })
+    );
+  };
+
+  const deleteHabit = (id: string) => {
+    setHabits(habits.filter((h: Habit) => h.id !== id));
+  };
+
+  const getStreak = (habit: Habit) => {
+    let streak = 0;
+    const d = new Date();
+    while (true) {
+      const ds = d.toISOString().split("T")[0];
+      if (habit.completedDates.includes(ds)) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else break;
+    }
+    return streak;
+  };
+
+  // Last 7 days for habit grid
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split("T")[0];
+  });
+
+  const tabLabels = {
+    daily: "日计划",
+    weekly: "周计划",
+    monthly: "月计划",
+    habits: "习惯养成",
+  };
+
+  const completedCount = filteredTodos.filter((t: Todo) => t.completed).length;
+
+  return (
+    <div>
+      <h1
+        style={{
+          fontSize: 24,
+          fontWeight: 700,
+          margin: "0 0 20px",
+          letterSpacing: "-0.5px",
+        }}
+      >
+        ☑ 计划清单
+      </h1>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 4,
+          marginBottom: 24,
+          background: "#1e293b",
+          borderRadius: 10,
+          padding: 4,
+          width: "fit-content",
+        }}
+      >
+        {(["daily", "weekly", "monthly", "habits"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: 8,
+              background: tab === t ? "#6366f1" : "transparent",
+              color: tab === t ? "white" : "#64748b",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: tab === t ? 600 : 400,
+              transition: "all 0.2s",
+            }}
+          >
+            {tabLabels[t]}
+          </button>
+        ))}
+      </div>
+
+      {tab !== "habits" ? (
+        <>
+          {/* Add Todo */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              marginBottom: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              value={newText}
+              onChange={(e) => setNewText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addTodo()}
+              placeholder={`添加${tabLabels[tab]}...`}
+              style={{
+                flex: 1,
+                minWidth: 200,
+                padding: "10px 14px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: 8,
+                color: "#e2e8f0",
+                fontSize: 14,
+                outline: "none",
+              }}
+            />
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              style={{
+                padding: "10px 14px",
+                background: "#1e293b",
+                border: "1px solid #334155",
+                borderRadius: 8,
+                color: "#e2e8f0",
+                fontSize: 14,
+                outline: "none",
+              }}
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={addTodo}
+              style={{
+                padding: "10px 20px",
+                background: "#6366f1",
+                border: "none",
+                borderRadius: 8,
+                color: "white",
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              添加
+            </button>
+          </div>
+
+          {/* Progress */}
+          {filteredTodos.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  color: "#64748b",
+                  marginBottom: 6,
+                }}
+              >
+                <span>
+                  完成进度 {completedCount}/{filteredTodos.length}
+                </span>
+                <span>
+                  {Math.round((completedCount / filteredTodos.length) * 100)}%
+                </span>
+              </div>
+              <div
+                style={{
+                  background: "#334155",
+                  borderRadius: 4,
+                  height: 6,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${(completedCount / filteredTodos.length) * 100}%`,
+                    height: "100%",
+                    background:
+                      completedCount === filteredTodos.length
+                        ? "#10b981"
+                        : "#6366f1",
+                    borderRadius: 4,
+                    transition: "width 0.3s",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Todo List */}
+          <div
+            style={{
+              background: "#1e293b",
+              borderRadius: 12,
+              border: "1px solid #334155",
+              overflow: "hidden",
+            }}
+          >
+            {filteredTodos.length === 0 ? (
+              <div
+                style={{
+                  padding: 40,
+                  textAlign: "center",
+                  color: "#475569",
+                  fontSize: 14,
+                }}
+              >
+                暂无{tabLabels[tab]}，添加你的第一个计划吧 ✦
+              </div>
+            ) : (
+              filteredTodos.map((todo: Todo) => (
+                <div
+                  key={todo.id}
+                  style={{
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    borderBottom: "1px solid #334155",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "#334155")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                >
+                  <button
+                    onClick={() => toggleTodo(todo.id)}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      border: todo.completed
+                        ? "none"
+                        : "2px solid #475569",
+                      background: todo.completed ? "#10b981"
